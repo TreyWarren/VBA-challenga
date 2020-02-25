@@ -1,0 +1,92 @@
+Sub StockTotals():
+
+For Each ws In Worksheets:
+    Worksheets(ws.Name).Activate
+    
+'Definitions_________________________________________________________________________________________
+Dim Ticker_Name As String
+Dim Ticker_Open As Double
+    'We want to have the initial Ticker value be taken before the For Loop starts iterating down
+    Ticker_Open = Cells(2, 3).Value
+Dim Ticker_Close As Double
+Dim Ticker_Delta As Double
+Dim Ticker_Volume As Double
+    'We want the initial Ticker volume to begin at zero so we can add each day's volume to it
+    Ticker_Volume = 0
+Dim Table_Row As Integer
+    'We want the table to begin one row down from the headers which we will create below
+    Table_Row = 2
+
+'Lets create the headers_____________________________________________________________________________
+Range("I1").Value = "Ticker"
+Range("J1").Value = "Yearly Change"
+Range("K1").Value = "Percent Change"
+Range("L1").Value = "Total Stock Volume"
+Range("O1").Value = "Ticker"
+Range("P1").Value = "Respective Value"
+Range("N2").Value = "Greatest Increase"
+Range("N3").Value = "Greatest Decrease"
+Range("N4").Value = "Greatest Volume"
+
+'Begin our For Loop_________________________________________________________________________________
+For i = 2 To ActiveSheet.UsedRange.Rows.Count
+                    ' ^ Search for the last Ticker Name in the list to use as an endpoint
+    
+    'Scrolling through the Tickers until we see that the next Ticker doesn't match the previous
+    If Cells(i, 1).Value <> Cells(i + 1, 1).Value Then
+        'Then take the Ticker's name, close value, and sum of its volume
+        Ticker_Name = Cells(i, 1).Value
+        Ticker_Close = Cells(i, 6).Value
+        Ticker_Volume = Ticker_Volume + Cells(i, 7).Value
+    
+        'Now paste the name, delta, percent change, and total volume into the table
+        Range("I" & Table_Row).Value = Ticker_Name
+            Ticker_Delta = Ticker_Close - Ticker_Open  'Simply defining Delta
+        Range("J" & Table_Row).Value = Ticker_Delta
+                'Create an If statement for the Ticker Delta color-------------------
+                If Ticker_Delta > 0 Then
+                    Range("J" & Table_Row).Interior.ColorIndex = 4
+                Else
+                    Range("J" & Table_Row).Interior.ColorIndex = 3
+                End If ' -----------------------------------------------------------
+        
+        If Ticker_Open > 0 Then 'Had to create a small If statement due to Planet Fitness
+            Range("K" & Table_Row).Value = Ticker_Delta / (Ticker_Open + 1E-05)
+        Else
+            Range("K" & Table_Row).Value = "N/A"
+        End If
+        
+        Range("L" & Table_Row).Value = Ticker_Volume
+        
+        'Now we need to move to the next row in the table, set the new Open Value, and reset the Volume
+        Table_Row = Table_Row + 1
+        Ticker_Open = Cells(i + 1, 3).Value
+        Ticker_Volume = 0
+    
+    Else
+        'Take the sum of the Ticker's volume for all other iterations
+        Ticker_Volume = Ticker_Volume + Cells(i, 7).Value
+        
+    End If '____________________________________________________________________________________________
+    
+ Next i
+
+'Challenge I --------------------------------------------------------------------
+Range("P2").Value = "=MAX(J:J)"
+Range("P3").Value = "=MIN(J:J)"
+Range("P4").Value = "=MAX(L:L)"
+Range("O2").Value = "=INDEX($I:$L,MATCH(P2,J:J,0),1)" 'Like VLOOKUP but you can look left
+Range("O3").Value = "=INDEX($I:$L,MATCH(P3,J:J,0),1)"
+Range("O4").Value = "=INDEX($I:$L,MATCH(P4,L:L,0),1)" '------------------------------
+
+'This is just some housekeeping -----------------------------------------------------
+Columns("G").NumberFormat = "#,##0"
+Columns("L").NumberFormat = "#,##0"
+Columns("P").NumberFormat = "#,##0"
+Columns("K").NumberFormat = "0%"
+ActiveSheet.Columns("A:P").AutoFit '-------------------------------------------------
+
+Next ws
+
+End Sub
+
